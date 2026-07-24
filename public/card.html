@@ -2,6 +2,365 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GW2 Fractal Bingo Card</title>
+  <style>
+    :root {
+      --bg: #121214;
+      --card-bg: #1e1e24;
+      --border: #33333d;
+      --text: #e1e1e6;
+      --accent: #e5a93c;
+      --cell-bg: #2a2a32;
+      --cell-marked: #4a3818;
+      --cell-marked-border: #e5a93c;
+      --cell-blocked: #3a1c1c;
+      --cell-blocked-border: #8b2626;
+      --cell-blocked-text: #888888;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.5rem;
+      touch-action: manipulation;
+    }
+
+    /* Container fills screen without overflowing on mobile viewports */
+    .container {
+      width: 100%;
+      max-width: min(96vw, 700px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-grow: 1;
+    }
+
+    header {
+      text-align: center;
+      margin-top: 0.25rem;
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      color: var(--accent);
+      font-size: clamp(1.2rem, 5vw, 2.2rem);
+      margin-bottom: 0.2rem;
+    }
+
+    .instructions {
+      font-size: clamp(0.7rem, 2.8vw, 0.85rem);
+      color: #a0a0b0;
+      line-height: 1.3;
+    }
+
+    .instructions span {
+      display: inline-block;
+      margin: 0 2px;
+    }
+
+    /* Reserved space for Bingo Banner */
+    .banner-wrapper {
+      width: 100%;
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .bingo-banner {
+      display: none;
+      width: 100%;
+      background: linear-gradient(135deg, #e5a93c, #f5d061);
+      color: #121214;
+      font-weight: 700;
+      font-size: clamp(0.9rem, 3.5vw, 1.35rem);
+      text-align: center;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      box-shadow: 0 4px 15px rgba(229, 169, 60, 0.4);
+      animation: popIn 0.3s ease-out;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    /* Responsive grid using container query scaling */
+    .bingo-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: clamp(4px, 1.2cqw, 8px);
+      width: 100%;
+      aspect-ratio: 1;
+      background-color: var(--card-bg);
+      padding: clamp(6px, 1.8cqw, 12px);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      container-type: inline-size;
+    }
+
+    .cell {
+      background-color: var(--cell-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2px 3px;
+      aspect-ratio: 1;
+      /* Font scales dynamically based on container width to avoid clipping */
+      font-size: clamp(0.48rem, 3.2cqw, 0.95rem);
+      font-weight: 500;
+      line-height: 1.05;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      word-break: normal;
+      overflow-wrap: break-word;
+      hyphens: auto;
+      overflow: hidden;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+
+    .cell:hover {
+      border-color: var(--accent);
+    }
+
+    /* Marked state (Left Click / Tap) */
+    .cell.marked {
+      background-color: var(--cell-marked);
+      border-color: var(--cell-marked-border);
+      color: #ffffff;
+    }
+
+    /* Blocked state (Right Click / Long Press) */
+    .cell.blocked {
+      background-color: var(--cell-blocked);
+      border-color: var(--cell-blocked-border);
+      color: var(--cell-blocked-text);
+      text-decoration: line-through;
+      opacity: 0.65;
+    }
+
+    .cell.free {
+      background-color: #2b261f;
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* Winning line glow animation */
+    .cell.winning {
+      animation: bingoPulse 1.2s infinite alternate;
+      border-color: #ffd700;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+    }
+
+    @keyframes bingoPulse {
+      0% { transform: scale(1); box-shadow: 0 0 4px rgba(255, 215, 0, 0.4); }
+      100% { transform: scale(1.02); box-shadow: 0 0 12px rgba(255, 215, 0, 0.8); }
+    }
+
+    footer {
+      margin-top: auto;
+      padding-top: 1rem;
+      padding-bottom: 0.5rem;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #8a8a93;
+      line-height: 1.4;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    .disclaimer {
+      font-size: 0.65rem;
+      color: #666670;
+      margin-top: 0.3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Guild Wars 2 Fractal Bingo</h1>
+      <p class="instructions">
+        <span><strong>Tap / Left-click:</strong> Mark</span> • 
+        <span><strong>Hold / Right-click:</strong> Cross off</span>
+      </p>
+    </header>
+
+    <div class="banner-wrapper">
+      <div id="bingoBanner" class="bingo-banner">🎉 BINGO! 🎉</div>
+    </div>
+
+    <div id="grid" class="bingo-grid"></div>
+
+    <footer>
+      <p>Created with <a href="https://www.youtube.com/@OliOli.OxenFree" target="_blank" rel="noopener noreferrer">OliOliOxenFree</a></p>
+      <p class="disclaimer">
+        Disclaimer: This tool is an unofficial fan-made project and is not affiliated with, endorsed, sponsored, or specifically approved by Guild Wars 2, ArenaNet, or NCSOFT.
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    const pathParts = window.location.pathname.split('/');
+    const cardId = pathParts[pathParts.length - 1];
+
+    async function loadCard() {
+      try {
+        const res = await fetch(`/api/cards/${cardId}`);
+        if (!res.ok) throw new Error('Card not found');
+        const data = await res.json();
+        renderGrid(data.grid);
+      } catch (err) {
+        document.getElementById('grid').innerHTML = `<p style="grid-column: span 5; text-align: center; color: #ff5555; padding: 2rem;">Card not found or expired.</p>`;
+      }
+    }
+
+    function renderGrid(gridData) {
+      const container = document.getElementById('grid');
+      container.innerHTML = '';
+
+      gridData.forEach((row) => {
+        row.forEach((cell) => {
+          const div = document.createElement('div');
+          div.className = 'cell';
+          
+          if (cell.type === 'free') {
+            div.classList.add('free');
+            div.textContent = 'FREE';
+          } else {
+            div.textContent = cell.label;
+            
+            // Left Click Handler
+            div.addEventListener('click', () => {
+              if (div.dataset.longPressed === 'true') {
+                delete div.dataset.longPressed;
+                return;
+              }
+              if (div.classList.contains('blocked')) {
+                div.classList.remove('blocked');
+              } else {
+                div.classList.toggle('marked');
+              }
+              checkBingo();
+            });
+
+            // Right Click Handler
+            div.addEventListener('contextmenu', (e) => {
+              e.preventDefault();
+              div.classList.remove('marked');
+              div.classList.toggle('blocked');
+              checkBingo();
+            });
+
+            // Touch Long-Press Handler for Mobile Devices
+            let touchTimer = null;
+            div.addEventListener('touchstart', () => {
+              touchTimer = setTimeout(() => {
+                div.dataset.longPressed = 'true';
+                div.classList.remove('marked');
+                div.classList.toggle('blocked');
+                checkBingo();
+              }, 500);
+            }, { passive: true });
+
+            div.addEventListener('touchend', () => {
+              clearTimeout(touchTimer);
+            });
+
+            div.addEventListener('touchmove', () => {
+              clearTimeout(touchTimer);
+            });
+          }
+          container.appendChild(div);
+        });
+      });
+
+      checkBingo();
+    }
+
+    function checkBingo() {
+      const cells = Array.from(document.querySelectorAll('.cell'));
+      if (cells.length !== 25) return;
+
+      cells.forEach(c => c.classList.remove('winning'));
+
+      const isMarked = (idx) => {
+        const c = cells[idx];
+        return c.classList.contains('marked') || c.classList.contains('free');
+      };
+
+      const winningIndices = new Set();
+
+      for (let r = 0; r < 5; r++) {
+        const row = [r*5, r*5+1, r*5+2, r*5+3, r*5+4];
+        if (row.every(isMarked)) row.forEach(i => winningIndices.add(i));
+      }
+
+      for (let c = 0; c < 5; c++) {
+        const col = [c, c+5, c+10, c+15, c+20];
+        if (col.every(isMarked)) col.forEach(i => winningIndices.add(i));
+      }
+
+      const diag1 = [0, 6, 12, 18, 24];
+      if (diag1.every(isMarked)) diag1.forEach(i => winningIndices.add(i));
+
+      const diag2 = [4, 8, 12, 16, 20];
+      if (diag2.every(isMarked)) diag2.forEach(i => winningIndices.add(i));
+
+      const banner = document.getElementById('bingoBanner');
+      if (winningIndices.size > 0) {
+        winningIndices.forEach(i => cells[i].classList.add('winning'));
+        banner.style.display = 'block';
+      } else {
+        banner.style.display = 'none';
+      }
+    }
+
+    // Auto-delete card on tab close
+    window.addEventListener('pagehide', () => {
+      fetch(`/api/cards/${cardId}`, {
+        method: 'DELETE',
+        keepalive: true
+      });
+    });
+
+    loadCard();
+  </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GW2 Fractal Bingo Card</title>
   <style>
