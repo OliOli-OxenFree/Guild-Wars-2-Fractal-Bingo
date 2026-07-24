@@ -16,7 +16,7 @@
       --cell-marked-border: #e5a93c;
       --cell-blocked: #3a1c1c;
       --cell-blocked-border: #8b2626;
-      --cell-blocked-text: #888888;
+      --cell-blocked-text: #ff9999;
     }
 
     * {
@@ -102,11 +102,11 @@
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       grid-template-rows: repeat(5, 1fr);
-      gap: clamp(4px, 1.2cqw, 8px);
+      gap: clamp(3px, 1cqw, 8px);
       width: 100%;
       aspect-ratio: 1;
       background-color: var(--card-bg);
-      padding: clamp(6px, 1.8cqw, 12px);
+      padding: clamp(4px, 1.5cqw, 12px);
       border-radius: 8px;
       border: 1px solid var(--border);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
@@ -121,10 +121,11 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 2px 3px;
+      padding: 1px 2px;
       aspect-ratio: 1;
-      font-size: clamp(0.48rem, 3.2cqw, 0.95rem);
-      font-weight: 400; /* Keep weight static across all states */
+      /* Smaller min-font scale to eliminate mobile text clipping */
+      font-size: clamp(0.38rem, 2.7cqw, 0.9rem);
+      font-weight: 400;
       line-height: 1.05;
       cursor: pointer;
       user-select: none;
@@ -140,7 +141,6 @@
       border-color: var(--accent);
     }
 
-    /* Marked state: Emulated bold via text-shadow prevents word wrap shifts */
     .cell.marked {
       background-color: var(--cell-marked);
       border-color: var(--cell-marked-border);
@@ -148,14 +148,14 @@
       text-shadow: 0 0 0.6px #ffffff, 0 0 0.6px #ffffff;
     }
 
-    /* Blocked state */
+    /* Red crossed-out state for blocked tiles */
     .cell.blocked {
       background-color: var(--cell-blocked);
       border-color: var(--cell-blocked-border);
       color: var(--cell-blocked-text);
       text-decoration: line-through;
       text-shadow: none;
-      opacity: 0.65;
+      opacity: 0.85;
     }
 
     .cell.free {
@@ -258,11 +258,13 @@
             div.textContent = cell.label;
             
             let touchTimer = null;
-            let isLongPress = false;
+            let longPressTriggered = false;
 
+            // Handle Desktop/Mobile Click
             div.addEventListener('click', (e) => {
-              if (isLongPress) {
-                isLongPress = false;
+              // Ignore click if a long press just occurred
+              if (longPressTriggered) {
+                longPressTriggered = false;
                 return;
               }
               if (div.classList.contains('blocked')) {
@@ -273,6 +275,7 @@
               checkBingo();
             });
 
+            // Handle Right-Click (Desktop)
             div.addEventListener('contextmenu', (e) => {
               e.preventDefault();
               div.classList.remove('marked');
@@ -280,19 +283,23 @@
               checkBingo();
             });
 
+            // Handle Hold / Long-Press (Mobile)
             div.addEventListener('touchstart', (e) => {
-              isLongPress = false;
+              longPressTriggered = false;
               touchTimer = setTimeout(() => {
-                isLongPress = true;
+                longPressTriggered = true;
                 div.classList.remove('marked');
                 div.classList.toggle('blocked');
                 checkBingo();
                 if (navigator.vibrate) navigator.vibrate(50);
-              }, 450);
+              }, 400);
             }, { passive: true });
 
-            div.addEventListener('touchend', () => {
+            div.addEventListener('touchend', (e) => {
               clearTimeout(touchTimer);
+              if (longPressTriggered) {
+                e.preventDefault();
+              }
             });
 
             div.addEventListener('touchmove', () => {
