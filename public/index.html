@@ -1,50 +1,399 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Guild Wars 2 Fractal Bingo</title>
-    <link rel="stylesheet" href="/styles.css" />
-  </head>
-  <body>
-    <main class="page">
-      <header class="hero">
-        <h1>Guild Wars 2 Fractal Bingo</h1>
-        <p class="lede">
-          Create five unique 5×5 fractal challenge cards. You only get shareable links—the
-          squares stay hidden until someone opens a card.
-        </p>
-        <p class="credit">Created by OliOliOxenFree</p>
-      </header>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GW2 Fractal Bingo Generator</title>
+  <style>
+    :root {
+      --bg: #121214;
+      --card-bg: #1e1e24;
+      --border: #33333d;
+      --text: #e1e1e6;
+      --accent: #e5a93c;
+    }
 
-      <section class="panel">
-        <label for="options">Options (one per line)</label>
-        <textarea
-          id="options"
-          rows="14"
-          placeholder="Add your bingo options here, one per line…"
-        ></textarea>
-        <p class="hint">
-          Each card uses 24 random picks plus a free center. If you have fewer than 24
-          options, some may repeat on a card.
-        </p>
-        <button type="button" id="generate" class="btn primary">Generate 5 cards</button>
-        <p id="error" class="error" hidden></p>
-      </section>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-      <section id="results" class="panel results" hidden>
-        <h2>Share these links</h2>
-        <p class="hint">
-          These URLs are the only output—card contents are not shown here.
-        </p>
-        <ol id="url-list" class="url-list"></ol>
-        <button type="button" id="copy-all" class="btn secondary">Copy all links</button>
-      </section>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem;
+    }
 
-      <footer class="site-footer">
-        <p>Guild Wars 2 Fractal Bingo · Created by OliOliOxenFree</p>
-      </footer>
-    </main>
-    <script src="/generator.js"></script>
-  </body>
+    .container {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      color: var(--accent);
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      margin-bottom: 0.5rem;
+    }
+
+    /* Styled card container for content sections */
+    .info-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .info-card h2 {
+      color: var(--accent);
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .info-card p {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .info-card p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Preset Button Styling */
+    .presets-container {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+
+    .preset-btn {
+      background-color: #2a2a32;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .preset-btn:hover {
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .preset-btn.active {
+      background-color: #4a3818;
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .preset-note {
+      font-size: 0.8rem;
+      color: #8a8a93;
+      font-style: italic;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    textarea {
+      width: 100%;
+      height: 220px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 1rem;
+      font-family: inherit;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      resize: vertical;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    textarea:focus {
+      outline: 1px solid var(--accent);
+      border-color: var(--accent);
+    }
+
+    .generate-btn {
+      width: 100%;
+      padding: 0.9rem;
+      background-color: var(--accent);
+      color: #121214;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .generate-btn:hover {
+      opacity: 0.95;
+    }
+
+    .generate-btn:active {
+      transform: scale(0.99);
+    }
+
+    .results {
+      margin-top: 1.5rem;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      display: none;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .results h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.85rem;
+      color: var(--accent);
+    }
+
+    .results ul {
+      list-style: none;
+    }
+
+    .results li {
+      margin-bottom: 0.6rem;
+      line-height: 1.4;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    footer {
+      margin-top: auto;
+      padding-top: 2rem;
+      padding-bottom: 1rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #8a8a93;
+      line-height: 1.5;
+    }
+
+    .disclaimer {
+      font-size: 0.7rem;
+      color: #666670;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Guild Wars 2 Fractal Bingo Generator</h1>
+    </header>
+
+    <div class="info-card">
+      <h2>How To Play</h2>
+      <p>Add or remove as many different fractal challenges as you want.</p>
+      <p>Created by <a href="https://www.youtube.com/@OliOli.OxenFree" target="_blank" rel="noopener noreferrer">OliOliOxenFree</a></p>
+    </div>
+
+    <!-- Presets Section -->
+    <div class="info-card">
+      <h2>Presets</h2>
+      <div class="presets-container">
+        <button type="button" class="preset-btn" data-preset="cms">
+          <span>CMs</span>
+        </button>
+        <!-- EASILY ADD MORE BUTTONS HERE IN THE FUTURE:
+        <button type="button" class="preset-btn" data-preset="t4s"><span>T4s</span></button>
+        -->
+      </div>
+      <p class="preset-note">More presets to come!</p>
+    </div>
+
+    <div class="form-group">
+      <label for="options">Options / Events (1 per line):</label>
+      <textarea id="options" placeholder="Wipe on Mai Trin&#10;Portal missed&#10;Agony death&#10;GG called early&#10;Top DPS sub 10k..."></textarea>
+    </div>
+
+    <button id="generateBtn" class="generate-btn">Generate 5 Card Links</button>
+
+    <div id="results" class="results">
+      <h2>Your Generated Card Links:</h2>
+      <ul id="linkList"></ul>
+    </div>
+
+    <footer>
+      <p>Created by <a href="https://www.youtube.com/@OliOli.OxenFree" target="_blank" rel="noopener noreferrer">OliOliOxenFree</a></p>
+      <p class="disclaimer">
+        Disclaimer: This tool is an unofficial fan-made project and is not affiliated with, endorsed, sponsored, or specifically approved by Guild Wars 2, ArenaNet, or NCSOFT. All Guild Wars 2 trademarks and copyrights belong to their respective owners.
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    // PRESET DATA STORE (Easily add future preset keys here)
+    const PRESETS = {
+      cms: [
+        "Be the last player to type /gg and die when it's needed.",
+        "Be the first player to type /gg and die when it's needed.",
+        "Be the first player to jump off a ledge.",
+        "Be the last player to jump off a ledge.",
+        "Be the only one alive at any point while every else is down or dead (/GG does not count).",
+        "Call out a mechanic in voice chat that isn't actually happening and get someone to fall for it.",
+        "Convince a player to follow you up a flight of stairs or ramp. It can't be an unavoidable one.",
+        "Convince a teammate to use a Revive Orb.",
+        "Damage a teammate without downing them.",
+        "Execute a novelty emote/dance or transform with a tonic during an active boss phase transition.",
+        "Get another player to jump with you in unison outside of combat.",
+        "Get another player to notice you getting CC'd.",
+        "Jump over any shockwave.",
+        "Kill any CM boss using the incorrect food and utility (0 food or utility does not count).",
+        "Res a teammate from full dead.",
+        "Resurrect a downed teammate while actively standing in a boss red zone and survive.",
+        "Single-handedly deal the most breakbar damage on a boss.",
+        "Be the first player to interact with a Mistlock Singularity when encountering it for the first time.",
+        "Be the last player to interact with a Mistlock - Singularity when encountering it for the first time.",
+        "Get a player to comment on their own build or DPS.",
+        "Troll a player with a portal.",
+        "Be the first player to CC the first Wisp that appears on Kinfall.",
+        "Be the last player to CC the last Wisp that appears on Kinfall.",
+        "Don't stack in the green every time in Kinfall.",
+        "Get stunned by the Focused Spikes mechanic on Kinfall at least twice.",
+        "Kite the Focused Spikes mechanic on Kinfall at least once.",
+        "Reach the end of the final gauntlet run on Kinfall with less than 50% of your HP remaining.",
+        "Stack in the green every time in Kinfall.",
+        "Touch every single cappable node during any bullet hell phase of the Ensolyss fight without dying.",
+        "Successfully cap every node during the bullet hell sequence after MAMA without dying.",
+        "Be the last player to land after taking any ley-energy wind in Shattered Observatory.",
+        "Be the first player to land after taking any ley-energy wind in Shattered Observatory.",
+        "Kill the Anomaly by yourself when fighting Artsariiv.",
+        "Kill the Anomaly by yourself when fighting Arkk.",
+        "Be the first player to use the Special Action Key at any point in Shattered Observatory.",
+        "Tether once to no orbs during any phase of fighting Arkk.",
+        "Tether to two orbs at the same time when fighting Arkk.",
+        "Block or reflect a projectile from Arkk.",
+        "Kill a mini golem all by yourself while fighting Arkk.",
+        "Fall through the floor when fighting Arkk and survive the fall.",
+        "Be the first player to /gg and die after killing the Sorrowful Spellcaster for the first time.",
+        "Be the last player to /gg and die after killing the Sorrowful Spellcaster for the first time.",
+        "Be the only player to hide behind a rock at any point during Sunqua peak.",
+        "Get to 8+ stacks of Tidal Bargain during Sunqua Peak.",
+        "Directly steal a tether from another player during Sunqua Peak.",
+        "Walk through every single Sorrow during Sunqua Peak.",
+        "Tether to the guilt during Sunqua Peak.",
+        "Walk a full circle around a Fear in Sunqua Peak without stunning anyone.",
+        "Steal an Aspect tether from a teammate on Silent Surf.",
+        "Place an axe on another player and have them complain about it on Silent Surf.",
+        "Kill an Aspect after 33% and have another player comment on it on Silent Surf.",
+        "Get feared by an Aspect and survive on Silent Surf.",
+        "Be the first player to return to the arena after killing an Aspect on Silent Surf.",
+        "Be the player that strips the most boons on Silent Surf.",
+        "Stand in a boss AoE without dying and have another player comment on it.",
+        "Complete more than one Astral Purifier minigame without spawning any mobs in the Lonely Tower.",
+        "Finish the Lonely Tower on an odd number of orb stacks."
+      ]
+      // FUTURE PRESETS EXAMPLE:
+      // t4s: [ "Option 1", "Option 2" ]
+    };
+
+    // PRESET TOGGLE HANDLER
+    document.querySelectorAll('.preset-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const presetKey = button.getAttribute('data-preset');
+        const presetLines = PRESETS[presetKey];
+        if (!presetLines) return;
+
+        const textarea = document.getElementById('options');
+        let currentLines = textarea.value.split('\n').map(s => s.trim()).filter(Boolean);
+        const isActive = button.classList.contains('active');
+
+        if (isActive) {
+          // Toggle OFF: Remove preset items from textarea
+          button.classList.remove('active');
+          const presetSet = new Set(presetLines);
+          currentLines = currentLines.filter(line => !presetSet.has(line));
+        } else {
+          // Toggle ON: Add preset items (prevent duplicates)
+          button.classList.add('active');
+          presetLines.forEach(line => {
+            if (!currentLines.includes(line)) {
+              currentLines.push(line);
+            }
+          });
+        }
+
+        textarea.value = currentLines.join('\n');
+      });
+    });
+
+    // CARD GENERATION HANDLER
+    document.getElementById('generateBtn').addEventListener('click', async () => {
+      const text = document.getElementById('options').value.trim();
+      if (!text) {
+        alert('Please enter or toggle at least one option.');
+        return;
+      }
+
+      const options = text.split('\n').map(s => s.trim()).filter(Boolean);
+
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ options })
+        });
+
+        const data = await res.json();
+        if (data.urls) {
+          const list = document.getElementById('linkList');
+          list.innerHTML = '';
+          data.urls.forEach((url, i) => {
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>Card ${i + 1}:</strong> <a href="${url}" target="_blank">${url}</a>`;
+            list.appendChild(li);
+          });
+          document.getElementById('results').style.display = 'block';
+        }
+      } catch (err) {
+        alert('Failed to generate cards. Make sure backend is running.');
+      }
+    });
+  </script>
+</body>
 </html>
