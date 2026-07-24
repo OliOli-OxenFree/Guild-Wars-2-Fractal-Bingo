@@ -67,52 +67,6 @@
       margin: 0 4px;
     }
 
-    /* Delete Card Button Styling */
-    .card-actions {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 0.75rem;
-    }
-
-    .delete-btn {
-      background-color: #3a1c1c;
-      color: #ff6b6b;
-      border: 1px solid #8b2626;
-      padding: 0.35rem 0.85rem;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .delete-btn:hover {
-      background-color: #8b2626;
-      color: #ffffff;
-    }
-
-    /* Bingo Notification Banner */
-    .bingo-banner {
-      display: none;
-      width: 100%;
-      background: linear-gradient(135deg, #e5a93c, #f5d061);
-      color: #121214;
-      font-weight: 700;
-      font-size: 1.25rem;
-      text-align: center;
-      padding: 0.65rem 1rem;
-      border-radius: 6px;
-      margin-bottom: 1rem;
-      box-shadow: 0 4px 15px rgba(229, 169, 60, 0.4);
-      animation: popIn 0.3s ease-out;
-    }
-
-    @keyframes popIn {
-      from { transform: scale(0.9); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
     /* Card background matching 1:1 aspect ratio */
     .bingo-grid {
       display: grid;
@@ -188,6 +142,27 @@
       100% { transform: scale(1.03); box-shadow: 0 0 14px rgba(255, 215, 0, 0.8); }
     }
 
+    /* Bingo Notification Banner (Positioned Below Grid) */
+    .bingo-banner {
+      display: none;
+      width: 100%;
+      background: linear-gradient(135deg, #e5a93c, #f5d061);
+      color: #121214;
+      font-weight: 700;
+      font-size: 1.25rem;
+      text-align: center;
+      padding: 0.65rem 1rem;
+      border-radius: 6px;
+      margin-top: 1.25rem;
+      box-shadow: 0 4px 15px rgba(229, 169, 60, 0.4);
+      animation: popIn 0.3s ease-out;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
     footer {
       margin-top: auto;
       padding-top: 2rem;
@@ -223,14 +198,12 @@
         <span><strong>Left-click:</strong> Mark tile</span> • 
         <span><strong>Right-click:</strong> Cross off tile</span>
       </p>
-      <div class="card-actions">
-        <button id="deleteCardBtn" class="delete-btn">🗑️ Delete Card</button>
-      </div>
     </header>
 
-    <div id="bingoBanner" class="bingo-banner">🎉 BINGO! 🎉</div>
-
     <div id="grid" class="bingo-grid"></div>
+
+    <!-- Banner placed below grid so layout doesn't shift when active -->
+    <div id="bingoBanner" class="bingo-banner">🎉 BINGO! 🎉</div>
 
     <footer>
       <p>Created with <a href="https://www.youtube.com/@OliOli.OxenFree" target="_blank" rel="noopener noreferrer">OliOliOxenFree</a></p>
@@ -331,27 +304,12 @@
       }
     }
 
-    // Manual Card Deletion Event Handler
-    document.getElementById('deleteCardBtn').addEventListener('click', async () => {
-      const confirmed = confirm('Are you sure you want to delete this bingo card?');
-      if (!confirmed) return;
-
-      try {
-        const res = await fetch(`/api/cards/${cardId}`, { method: 'DELETE' });
-        if (res.ok) {
-          document.querySelector('.container').innerHTML = `
-            <div style="text-align: center; margin-top: 4rem;">
-              <h2 style="color: var(--accent); margin-bottom: 1rem;">Card Deleted</h2>
-              <p style="color: #a0a0b0; margin-bottom: 1.5rem;">This bingo card has been permanently removed.</p>
-              <a href="/" style="color: var(--accent); font-weight: 600; text-decoration: underline;">← Return to Main Page</a>
-            </div>
-          `;
-        } else {
-          alert('Failed to delete the card.');
-        }
-      } catch (err) {
-        alert('Network error while attempting to delete.');
-      }
+    // Auto-delete card on tab close or navigation
+    window.addEventListener('pagehide', () => {
+      fetch(`/api/cards/${cardId}`, {
+        method: 'DELETE',
+        keepalive: true
+      });
     });
 
     loadCard();
