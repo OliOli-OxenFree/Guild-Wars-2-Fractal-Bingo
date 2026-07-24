@@ -67,6 +67,31 @@
       margin: 0 4px;
     }
 
+    /* Delete Card Button Styling */
+    .card-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 0.75rem;
+    }
+
+    .delete-btn {
+      background-color: #3a1c1c;
+      color: #ff6b6b;
+      border: 1px solid #8b2626;
+      padding: 0.35rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .delete-btn:hover {
+      background-color: #8b2626;
+      color: #ffffff;
+    }
+
     /* Bingo Notification Banner */
     .bingo-banner {
       display: none;
@@ -101,7 +126,7 @@
       border-radius: 8px;
       border: 1px solid var(--border);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-      container-type: inline-size; /* Enables container-relative font sizing */
+      container-type: inline-size;
     }
 
     .cell {
@@ -114,7 +139,6 @@
       text-align: center;
       padding: 3px 5px;
       aspect-ratio: 1;
-      /* Font scales relative to container width (cqi) to fit long descriptions cleanly */
       font-size: clamp(0.42rem, 2.2cqi, 0.72rem);
       font-weight: 500;
       line-height: 1.1;
@@ -199,6 +223,9 @@
         <span><strong>Left-click:</strong> Mark tile</span> • 
         <span><strong>Right-click:</strong> Cross off tile</span>
       </p>
+      <div class="card-actions">
+        <button id="deleteCardBtn" class="delete-btn">🗑️ Delete Card</button>
+      </div>
     </header>
 
     <div id="bingoBanner" class="bingo-banner">🎉 BINGO! 🎉</div>
@@ -303,6 +330,29 @@
         banner.style.display = 'none';
       }
     }
+
+    // Manual Card Deletion Event Handler
+    document.getElementById('deleteCardBtn').addEventListener('click', async () => {
+      const confirmed = confirm('Are you sure you want to delete this bingo card?');
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch(`/api/cards/${cardId}`, { method: 'DELETE' });
+        if (res.ok) {
+          document.querySelector('.container').innerHTML = `
+            <div style="text-align: center; margin-top: 4rem;">
+              <h2 style="color: var(--accent); margin-bottom: 1rem;">Card Deleted</h2>
+              <p style="color: #a0a0b0; margin-bottom: 1.5rem;">This bingo card has been permanently removed.</p>
+              <a href="/" style="color: var(--accent); font-weight: 600; text-decoration: underline;">← Return to Main Page</a>
+            </div>
+          `;
+        } else {
+          alert('Failed to delete the card.');
+        }
+      } catch (err) {
+        alert('Network error while attempting to delete.');
+      }
+    });
 
     loadCard();
   </script>
