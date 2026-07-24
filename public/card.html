@@ -36,9 +36,10 @@
       padding: 1rem;
     }
 
+    /* Expanded container to use maximum screen real estate */
     .container {
       width: 100%;
-      max-width: 600px;
+      max-width: min(90vw, 850px); /* Scales up to 850px on desktop while respecting viewport bounds */
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -47,13 +48,13 @@
 
     header {
       text-align: center;
-      margin-bottom: 1.25rem;
+      margin-bottom: 0.75rem;
     }
 
     h1 {
       color: var(--accent);
-      font-size: clamp(1.4rem, 4vw, 2rem);
-      margin-bottom: 0.4rem;
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+      margin-bottom: 0.3rem;
     }
 
     .instructions {
@@ -67,16 +68,45 @@
       margin: 0 4px;
     }
 
-    /* Card background matching 1:1 aspect ratio */
+    /* Reserved space for Bingo Banner to eliminate layout shifting */
+    .banner-wrapper {
+      width: 100%;
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .bingo-banner {
+      display: none;
+      width: 100%;
+      background: linear-gradient(135deg, #e5a93c, #f5d061);
+      color: #121214;
+      font-weight: 700;
+      font-size: clamp(1rem, 2.5vw, 1.35rem);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      box-shadow: 0 4px 15px rgba(229, 169, 60, 0.4);
+      animation: popIn 0.3s ease-out;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    /* Grid expands dynamically to fill container */
     .bingo-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       grid-template-rows: repeat(5, 1fr);
-      gap: 8px;
+      gap: 10px;
       width: 100%;
       aspect-ratio: 1;
       background-color: var(--card-bg);
-      padding: 12px;
+      padding: 14px;
       border-radius: 8px;
       border: 1px solid var(--border);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
@@ -91,11 +121,12 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 3px 5px;
+      padding: 6px 8px;
       aspect-ratio: 1;
-      font-size: clamp(0.42rem, 2.2cqi, 0.72rem);
+      /* Font scales seamlessly with larger grid size */
+      font-size: clamp(0.55rem, 2.7cqi, 0.95rem);
       font-weight: 500;
-      line-height: 1.1;
+      line-height: 1.15;
       cursor: pointer;
       user-select: none;
       word-break: break-word;
@@ -128,6 +159,7 @@
       background-color: #2b261f;
       border-color: var(--accent);
       color: var(--accent);
+      font-weight: 700;
     }
 
     /* Winning line glow animation */
@@ -142,30 +174,9 @@
       100% { transform: scale(1.03); box-shadow: 0 0 14px rgba(255, 215, 0, 0.8); }
     }
 
-    /* Bingo Notification Banner (Positioned Below Grid) */
-    .bingo-banner {
-      display: none;
-      width: 100%;
-      background: linear-gradient(135deg, #e5a93c, #f5d061);
-      color: #121214;
-      font-weight: 700;
-      font-size: 1.25rem;
-      text-align: center;
-      padding: 0.65rem 1rem;
-      border-radius: 6px;
-      margin-top: 1.25rem;
-      box-shadow: 0 4px 15px rgba(229, 169, 60, 0.4);
-      animation: popIn 0.3s ease-out;
-    }
-
-    @keyframes popIn {
-      from { transform: scale(0.9); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
     footer {
       margin-top: auto;
-      padding-top: 2rem;
+      padding-top: 1.5rem;
       padding-bottom: 1rem;
       text-align: center;
       font-size: 0.8rem;
@@ -200,10 +211,12 @@
       </p>
     </header>
 
-    <div id="grid" class="bingo-grid"></div>
+    <!-- Dedicated slot reserved for Bingo Banner -->
+    <div class="banner-wrapper">
+      <div id="bingoBanner" class="bingo-banner">🎉 BINGO! 🎉</div>
+    </div>
 
-    <!-- Banner placed below grid so layout doesn't shift when active -->
-    <div id="bingoBanner" class="bingo-banner">🎉 BINGO! 🎉</div>
+    <div id="grid" class="bingo-grid"></div>
 
     <footer>
       <p>Created with <a href="https://www.youtube.com/@OliOli.OxenFree" target="_blank" rel="noopener noreferrer">OliOliOxenFree</a></p>
@@ -304,7 +317,7 @@
       }
     }
 
-    // Auto-delete card on tab close or navigation
+    // Auto-delete card when tab is closed
     window.addEventListener('pagehide', () => {
       fetch(`/api/cards/${cardId}`, {
         method: 'DELETE',
