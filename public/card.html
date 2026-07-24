@@ -123,15 +123,16 @@
       text-align: center;
       padding: 1px 2px;
       aspect-ratio: 1;
-      /* Smaller min-font scale to eliminate mobile text clipping */
-      font-size: clamp(0.38rem, 2.7cqw, 0.9rem);
+      /* Micro font scaling to ensure all longer text strings fit */
+      font-size: clamp(0.35rem, 2.5cqw, 0.85rem);
       font-weight: 400;
-      line-height: 1.05;
+      line-height: 1.0;
       cursor: pointer;
       user-select: none;
       -webkit-user-select: none;
-      word-break: normal;
-      overflow-wrap: break-word;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      -webkit-hyphens: auto;
       hyphens: auto;
       overflow: hidden;
       transition: background-color 0.15s, border-color 0.15s;
@@ -148,7 +149,6 @@
       text-shadow: 0 0 0.6px #ffffff, 0 0 0.6px #ffffff;
     }
 
-    /* Red crossed-out state for blocked tiles */
     .cell.blocked {
       background-color: var(--cell-blocked);
       border-color: var(--cell-blocked-border);
@@ -209,7 +209,7 @@
       <h1>Guild Wars 2 Fractal Bingo</h1>
       <p class="instructions">
         <span><strong>Tap / Left-click:</strong> Mark</span> • 
-        <span><strong>Hold / Right-click:</strong> Cross off</span>
+        <span><strong>Double Tap / Right-click:</strong> Cross off</span>
       </p>
     </header>
 
@@ -257,53 +257,40 @@
           } else {
             div.textContent = cell.label;
             
-            let touchTimer = null;
-            let longPressTriggered = false;
+            let lastTapTime = 0;
+            let singleTapTimeout = null;
 
-            // Handle Desktop/Mobile Click
+            // Single tap marks, Double tap crosses off
             div.addEventListener('click', (e) => {
-              // Ignore click if a long press just occurred
-              if (longPressTriggered) {
-                longPressTriggered = false;
-                return;
-              }
-              if (div.classList.contains('blocked')) {
-                div.classList.remove('blocked');
+              const currentTime = new Date().getTime();
+              const tapLength = currentTime - lastTapTime;
+
+              if (tapLength < 300 && tapLength > 0) {
+                // DOUBLE TAP DETECTED
+                clearTimeout(singleTapTimeout);
+                div.classList.remove('marked');
+                div.classList.toggle('blocked');
+                checkBingo();
               } else {
-                div.classList.toggle('marked');
+                // SINGLE TAP DETECTED (Delayed slightly to listen for double tap)
+                singleTapTimeout = setTimeout(() => {
+                  if (div.classList.contains('blocked')) {
+                    div.classList.remove('blocked');
+                  } else {
+                    div.classList.toggle('marked');
+                  }
+                  checkBingo();
+                }, 250);
               }
-              checkBingo();
+              lastTapTime = currentTime;
             });
 
-            // Handle Right-Click (Desktop)
+            // Right Click Handler for Desktop Users
             div.addEventListener('contextmenu', (e) => {
               e.preventDefault();
               div.classList.remove('marked');
               div.classList.toggle('blocked');
               checkBingo();
-            });
-
-            // Handle Hold / Long-Press (Mobile)
-            div.addEventListener('touchstart', (e) => {
-              longPressTriggered = false;
-              touchTimer = setTimeout(() => {
-                longPressTriggered = true;
-                div.classList.remove('marked');
-                div.classList.toggle('blocked');
-                checkBingo();
-                if (navigator.vibrate) navigator.vibrate(50);
-              }, 400);
-            }, { passive: true });
-
-            div.addEventListener('touchend', (e) => {
-              clearTimeout(touchTimer);
-              if (longPressTriggered) {
-                e.preventDefault();
-              }
-            });
-
-            div.addEventListener('touchmove', () => {
-              clearTimeout(touchTimer);
             });
           }
           container.appendChild(div);
