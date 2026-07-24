@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GW2 Fractal Bingo Card</title>
+  <title>GW2 Fractal Bingo Generator</title>
   <style>
     :root {
       --bg: #121214;
@@ -11,12 +11,6 @@
       --border: #33333d;
       --text: #e1e1e6;
       --accent: #e5a93c;
-      --cell-bg: #2a2a32;
-      --cell-marked: #4a3818;
-      --cell-marked-border: #e5a93c;
-      --cell-blocked: #3a1c1c;
-      --cell-blocked-border: #8b2626;
-      --cell-blocked-text: #888888;
     }
 
     * {
@@ -33,7 +27,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 1rem;
+      padding: 1.5rem;
     }
 
     .container {
@@ -41,125 +35,122 @@
       max-width: 600px;
       display: flex;
       flex-direction: column;
-      align-items: center;
       flex-grow: 1;
     }
 
     header {
       text-align: center;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.5rem;
     }
 
     h1 {
       color: var(--accent);
-      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .how-to-play {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .how-to-play h2 {
+      color: var(--accent);
+      font-size: 1.15rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .how-to-play p {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: #c4c4d0;
       margin-bottom: 0.4rem;
     }
 
-    .instructions {
-      font-size: 0.85rem;
-      color: #a0a0b0;
-      line-height: 1.4;
+    .how-to-play p:last-child {
+      margin-bottom: 0;
     }
 
-    .instructions span {
-      display: inline-block;
-      margin: 0 4px;
+    .form-group {
+      margin-bottom: 1.5rem;
     }
 
-    /* Bingo Notification Banner */
-    .bingo-banner {
-      display: none;
-      width: 100%;
-      background: linear-gradient(135deg, #e5a93c, #f5d061);
-      color: #121214;
-      font-weight: 700;
-      font-size: 1.25rem;
-      text-align: center;
-      padding: 0.65rem 1rem;
-      border-radius: 6px;
-      margin-bottom: 1rem;
-      box-shadow: 0 4px 15px rgba(229, 169, 60, 0.4);
-      animation: popIn 0.3s ease-out;
-    }
-
-    @keyframes popIn {
-      from { transform: scale(0.9); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
-    /* Card background matching 1:1 aspect ratio */
-    .bingo-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      grid-template-rows: repeat(5, 1fr);
-      gap: 8px;
-      width: 100%;
-      aspect-ratio: 1; /* Perfectly matches the 5x5 square cells */
-      background-color: var(--card-bg);
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    }
-
-    .cell {
-      background-color: var(--cell-bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 4px; /* Reduced to prevent vertical clipping */
-      aspect-ratio: 1;
-      font-size: clamp(0.55rem, 1.5vw, 0.8rem); /* Adjusted font bounds for high readability */
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
       font-weight: 500;
-      line-height: 1.15; /* Compact line height keeps multi-line text bounded */
+    }
+
+    textarea {
+      width: 100%;
+      height: 180px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 0.85rem;
+      font-family: inherit;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      resize: vertical;
+    }
+
+    textarea:focus {
+      outline: 1px solid var(--accent);
+    }
+
+    button {
+      width: 100%;
+      padding: 0.85rem;
+      background-color: var(--accent);
+      color: #121214;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
-      user-select: none;
-      word-break: break-word;
-      overflow-wrap: anywhere;
-      overflow: hidden;
-      transition: background-color 0.2s, border-color 0.2s, transform 0.1s, box-shadow 0.2s;
+      font-size: 1rem;
+      transition: opacity 0.2s;
     }
 
-    .cell:hover {
-      border-color: var(--accent);
+    button:hover {
+      opacity: 0.9;
     }
 
-    /* Marked state (Left Click) */
-    .cell.marked {
-      background-color: var(--cell-marked);
-      border-color: var(--cell-marked-border);
-      color: #ffffff;
+    .results {
+      margin-top: 1.5rem;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      display: none;
     }
 
-    /* Blocked state (Right Click) */
-    .cell.blocked {
-      background-color: var(--cell-blocked);
-      border-color: var(--cell-blocked-border);
-      color: var(--cell-blocked-text);
-      text-decoration: line-through;
-      opacity: 0.65;
-    }
-
-    .cell.free {
-      background-color: #2b261f;
-      border-color: var(--accent);
+    .results h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.85rem;
       color: var(--accent);
     }
 
-    /* Winning line glow animation */
-    .cell.winning {
-      animation: bingoPulse 1.2s infinite alternate;
-      border-color: #ffd700;
-      box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+    .results ul {
+      list-style: none;
     }
 
-    @keyframes bingoPulse {
-      0% { transform: scale(1); box-shadow: 0 0 6px rgba(255, 215, 0, 0.4); }
-      100% { transform: scale(1.03); box-shadow: 0 0 14px rgba(255, 215, 0, 0.8); }
+    .results li {
+      margin-bottom: 0.6rem;
+      line-height: 1.4;
+    }
+
+    .results a, header a, footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .results a:hover, header a:hover, footer a:hover {
+      text-decoration: underline;
     }
 
     footer {
@@ -167,18 +158,9 @@
       padding-top: 2rem;
       padding-bottom: 1rem;
       text-align: center;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       color: #8a8a93;
       line-height: 1.5;
-    }
-
-    footer a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    footer a:hover {
-      text-decoration: underline;
     }
 
     .disclaimer {
@@ -192,19 +174,29 @@
 
   <div class="container">
     <header>
-      <h1>Guild Wars 2 Fractal Bingo</h1>
-      <p class="instructions">
-        <span><strong>Left-click:</strong> Mark tile</span> • 
-        <span><strong>Right-click:</strong> Cross off tile</span>
-      </p>
+      <h1>Guild Wars 2 Fractal Bingo Generator</h1>
     </header>
 
-    <div id="bingoBanner" class="bingo-banner">🎉 BINGO! 🎉</div>
+    <div class="how-to-play">
+      <h2>How To Play</h2>
+      <p>Add or remove as many different fractal challenges as you want. It's currently tailored for CMs only.</p>
+      <p>Created by <a href="https://www.youtube.com/@OliOli.OxenFree" target="_blank" rel="noopener noreferrer">OliOliOxenFree</a></p>
+    </div>
 
-    <div id="grid" class="bingo-grid"></div>
+    <div class="form-group">
+      <label for="options">Options / Events (1 per line):</label>
+      <textarea id="options" placeholder="Wipe on Mai Trin&#10;Portal missed&#10;Agony death&#10;GG called early&#10;Top DPS sub 10k..."></textarea>
+    </div>
+
+    <button id="generateBtn">Generate 5 Card Links</button>
+
+    <div id="results" class="results">
+      <h2>Your Generated Card Links:</h2>
+      <ul id="linkList"></ul>
+    </div>
 
     <footer>
-      <p>Created with <a href="https://www.youtube.com/@OliOli.OxenFree" target="_blank" rel="noopener noreferrer">OliOliOxenFree</a></p>
+      <p>Created by <a href="https://www.youtube.com/@OliOli.OxenFree" target="_blank" rel="noopener noreferrer">OliOliOxenFree</a></p>
       <p class="disclaimer">
         Disclaimer: This tool is an unofficial fan-made project and is not affiliated with, endorsed, sponsored, or specifically approved by Guild Wars 2, ArenaNet, or NCSOFT. All Guild Wars 2 trademarks and copyrights belong to their respective owners.
       </p>
@@ -212,103 +204,37 @@
   </div>
 
   <script>
-    const pathParts = window.location.pathname.split('/');
-    const cardId = pathParts[pathParts.length - 1];
+    document.getElementById('generateBtn').addEventListener('click', async () => {
+      const text = document.getElementById('options').value.trim();
+      if (!text) {
+        alert('Please enter at least one option.');
+        return;
+      }
 
-    async function loadCard() {
+      const options = text.split('\n').map(s => s.trim()).filter(Boolean);
+
       try {
-        const res = await fetch(`/api/cards/${cardId}`);
-        if (!res.ok) throw new Error('Card not found');
-        const data = await res.json();
-        renderGrid(data.grid);
-      } catch (err) {
-        document.getElementById('grid').innerHTML = `<p style="grid-column: span 5; text-align: center; color: #ff5555; padding: 2rem;">Card not found or expired.</p>`;
-      }
-    }
-
-    function renderGrid(gridData) {
-      const container = document.getElementById('grid');
-      container.innerHTML = '';
-
-      gridData.forEach((row) => {
-        row.forEach((cell) => {
-          const div = document.createElement('div');
-          div.className = 'cell';
-          
-          if (cell.type === 'free') {
-            div.classList.add('free');
-            div.textContent = 'FREE';
-          } else {
-            div.textContent = cell.label;
-            
-            // Left click: Toggle marked
-            div.addEventListener('click', () => {
-              if (div.classList.contains('blocked')) {
-                div.classList.remove('blocked');
-              } else {
-                div.classList.toggle('marked');
-              }
-              checkBingo();
-            });
-
-            // Right click: Toggle blocked/crossed-off
-            div.addEventListener('contextmenu', (e) => {
-              e.preventDefault();
-              div.classList.remove('marked');
-              div.classList.toggle('blocked');
-              checkBingo();
-            });
-          }
-          container.appendChild(div);
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ options })
         });
-      });
 
-      checkBingo();
-    }
-
-    function checkBingo() {
-      const cells = Array.from(document.querySelectorAll('.cell'));
-      if (cells.length !== 25) return;
-
-      // Clear previous winning highlights
-      cells.forEach(c => c.classList.remove('winning'));
-
-      const isMarked = (idx) => {
-        const c = cells[idx];
-        return c.classList.contains('marked') || c.classList.contains('free');
-      };
-
-      const winningIndices = new Set();
-
-      // Check Rows
-      for (let r = 0; r < 5; r++) {
-        const row = [r*5, r*5+1, r*5+2, r*5+3, r*5+4];
-        if (row.every(isMarked)) row.forEach(i => winningIndices.add(i));
+        const data = await res.json();
+        if (data.urls) {
+          const list = document.getElementById('linkList');
+          list.innerHTML = '';
+          data.urls.forEach((url, i) => {
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>Card ${i + 1}:</strong> <a href="${url}" target="_blank">${url}</a>`;
+            list.appendChild(li);
+          });
+          document.getElementById('results').style.display = 'block';
+        }
+      } catch (err) {
+        alert('Failed to generate cards. Make sure backend is running.');
       }
-
-      // Check Columns
-      for (let c = 0; c < 5; c++) {
-        const col = [c, c+5, c+10, c+15, c+20];
-        if (col.every(isMarked)) col.forEach(i => winningIndices.add(i));
-      }
-
-      // Check Diagonals
-      const diag1 = [0, 6, 12, 18, 24];
-      if (diag1.every(isMarked)) diag1.forEach(i => winningIndices.add(i));
-
-      const diag2 = [4, 8, 12, 16, 20];
-      if (diag2.every(isMarked)) diag2.forEach(i => winningIndices.add(i));
-
-      const banner = document.getElementById('bingoBanner');
-      if (winningIndices.size > 0) {
-        winningIndices.forEach(i => cells[i].classList.add('winning'));
-        banner.style.display = 'block';
-      } else {
-        banner.style.display = 'none';
-      }
-    }
-
-    loadCard();
+    });
   </script>
 </body>
 </html>
