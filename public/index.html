@@ -239,9 +239,6 @@
         <button type="button" class="preset-btn" data-preset="cms">
           <span>CMs</span>
         </button>
-        <!-- EASILY ADD MORE BUTTONS HERE IN THE FUTURE:
-        <button type="button" class="preset-btn" data-preset="t4s"><span>T4s</span></button>
-        -->
       </div>
       <p class="preset-note">More presets to come!</p>
     </div>
@@ -267,7 +264,7 @@
   </div>
 
   <script>
-    // PRESET DATA STORE (Easily add future preset keys here)
+    // PRESET DATA STORE
     const PRESETS = {
       cms: [
         "Be the last player to type /gg and die when it's needed.",
@@ -328,8 +325,6 @@
         "Complete more than one Astral Purifier minigame without spawning any mobs in the Lonely Tower.",
         "Finish the Lonely Tower on an odd number of orb stacks."
       ]
-      // FUTURE PRESETS EXAMPLE:
-      // t4s: [ "Option 1", "Option 2" ]
     };
 
     // PRESET TOGGLE HANDLER
@@ -344,12 +339,10 @@
         const isActive = button.classList.contains('active');
 
         if (isActive) {
-          // Toggle OFF: Remove preset items from textarea
           button.classList.remove('active');
           const presetSet = new Set(presetLines);
           currentLines = currentLines.filter(line => !presetSet.has(line));
         } else {
-          // Toggle ON: Add preset items (prevent duplicates)
           button.classList.add('active');
           presetLines.forEach(line => {
             if (!currentLines.includes(line)) {
