@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Guild Wars 2 Fractal Bingo</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <h1>Guild Wars 2 Fractal Bingo</h1>
+        <p class="lede">
+          Create five unique 5×5 fractal challenge cards. You only get shareable links—the
+          squares stay hidden until someone opens a card.
+        </p>
+        <p class="credit">Created by OliOliOxenFree</p>
+      </header>
+
+      <section class="panel">
+        <label for="options">Options (one per line)</label>
+        <textarea
+          id="options"
+          rows="14"
+          placeholder="Add your bingo options here, one per line…"
+        ></textarea>
+        <p class="hint">
+          Each card uses 24 random picks plus a free center. If you have fewer than 24
+          options, some may repeat on a card.
+        </p>
+        <button type="button" id="generate" class="btn primary">Generate 5 cards</button>
+        <p id="error" class="error" hidden></p>
+      </section>
+
+      <section id="results" class="panel results" hidden>
+        <h2>Share these links</h2>
+        <p class="hint">
+          These URLs are the only output—card contents are not shown here.
+        </p>
+        <ol id="url-list" class="url-list"></ol>
+        <button type="button" id="copy-all" class="btn secondary">Copy all links</button>
+      </section>
+
+      <footer class="site-footer">
+        <p>Guild Wars 2 Fractal Bingo · Created by OliOliOxenFree</p>
+      </footer>
+    </main>
+    <script src="/generator.js"></script>
+  </body>
+</html>
